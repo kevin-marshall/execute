@@ -28,7 +28,7 @@ describe 'CMD' do
   end
 
   it 'with an administrative user set, the command should succeed' do
-    cmd = CMD.new('net session', { quiet: true, admin_user: 'kmarshall', debug: true })
+    cmd = CMD.new('net session', { quiet: true, admin_user: 'aimtester', debug: true })
 	expect { cmd.execute }.to raise_error
 	expect(cmd[:error].include?('Access is denied')).to eq(false)
 	expect(cmd[:exit_status]).to_not eq(0)
