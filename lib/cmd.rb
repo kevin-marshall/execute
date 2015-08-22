@@ -17,19 +17,18 @@ class CMD < Hash
 	  puts self[:command] unless(self[:quiet])
 	  cmd = self[:command]
 	  cmd = "runas /savecred /user:#{self[:admin_user]} \"#{cmd}\"" if(has_key?(:admin_user))
-	  puts "cmd: #{cmd}"
-      self[:output],self[:error], self[:exit_code] = Open3.capture3(cmd)
+      self[:output],self[:error], self[:exit_code] = Open3.capture3(cmd, :stdin_data => STDIN)
       self[:exit_code]=self[:exit_code].to_i
-	  
-	  if(self[:debug])
-		puts "command: #{self[:command]}" if(self[:quiet])
-	    puts "output: #{self[:output]}"
-	    puts "error: #{self[:error]}"
-	    puts "exit_code: #{self[:exit_code]}"
-	  end
 	rescue Exception => e
 	  self[:error] = "Exception: " + e.to_s
-	  self[:exit_code]=1 unless(has_key('exit_code'))
+	  self[:exit_code]=1 unless(has_key?(:exit_code))
+	end
+
+	if(self[:debug])
+	  puts "command: #{self[:command]}" if(self[:quiet])
+	  puts "output: #{self[:output]}"
+	  puts "error: #{self[:error]}"
+	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
