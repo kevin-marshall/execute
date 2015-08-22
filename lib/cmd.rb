@@ -8,14 +8,17 @@ class CMD < Hash
    self[:debug] = false
    self[:quiet] = false
 
-   self[:command]=cmd
    options.each { |key, value| self[key] = value} unless(options.nil?)
+   self[:command]=cmd
   end
   
   def execute
     begin
 	  puts self[:command] unless(self[:quiet])
-      self[:output],self[:error], self[:exit_code] = Open3.capture3(self[:command])
+	  cmd = self[:command]
+	  cmd = "runas /savecred /user:#{self[:admin_user]} \"#{cmd}\"" if(has_key?(:admin_user))
+	  puts "cmd: #{cmd}"
+      self[:output],self[:error], self[:exit_code] = Open3.capture3(cmd)
       self[:exit_code]=self[:exit_code].to_i
 	  
 	  if(self[:debug])

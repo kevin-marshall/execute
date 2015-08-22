@@ -18,15 +18,19 @@ describe 'CMD' do
   
   it 'should not have administrative privledges' do
     cmd = CMD.new('net session', { quiet: true })
-	expect { cmd.execute }.to raise_error
+	begin
+		cmd.execute
+		expect(true).to eq(false)
+	rescue
+	end
 	expect(cmd[:error].include?('Access is denied')).to eq(true)
 	expect(cmd[:exit_status]).to_not eq(0)
   end
 
   it 'with an administrative user set, the command should succeed' do
-    cmd = CMD.new('net session', { quiet: true })
+    cmd = CMD.new('net session', { quiet: true, admin_user: 'kmarshall', debug: true })
 	expect { cmd.execute }.to raise_error
-	expect(cmd[:error].include?('Access is denied')).to eq(true)
+	expect(cmd[:error].include?('Access is denied')).to eq(false)
 	expect(cmd[:exit_status]).to_not eq(0)
   end
 end
