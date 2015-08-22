@@ -15,4 +15,11 @@ describe 'CMD' do
 	expect(cmd[:error].include?('No such file or directory')).to eq(true)
 	expect(cmd[:exit_status]).to_not eq(0)
   end
+  
+  it 'should not have administrative privledges' do
+    cmd = CMD.new('net session', { quiet: true })
+	expect { cmd.execute }.to raise_error
+	expect(cmd[:error].include?('Access is denied')).to eq(true)
+	expect(cmd[:exit_status]).to_not eq(0)
+  end
 end
