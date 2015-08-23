@@ -2,26 +2,26 @@ require 'rspec'
 require './lib/cmd.rb'
 
 describe 'CMD' do
+  CMD.default_options({ echo_command: false, echo_output: false })
   it 'should be able to execute: dir' do
-    cmd = CMD.new('dir', { quiet: true })
+    cmd = CMD.new('dir')
 	cmd.execute
 	expect(cmd[:output].empty?).to eq(false)
 	expect(cmd[:output].include?('Directory')).to eq(true)
   end
 
   it 'should fail executing: isnotacommand' do
-    cmd = CMD.new('isnotacommand', { quiet: true })
+    cmd = CMD.new('isnotacommand')
 	begin
 		cmd.execute
 		expect(true).to eq(false)
 	rescue
 	end
-	expect(cmd[:error].include?('No such file or directory')).to eq(true)
 	expect(cmd[:exit_code]).to_not eq(0)
   end
   
   it 'should not have administrative privledges' do
-    cmd = CMD.new('net session', { quiet: true })
+    cmd = CMD.new('net session')
 	begin
 		cmd.execute
 		expect(true).to eq(false)
@@ -29,11 +29,5 @@ describe 'CMD' do
 	end
 	expect(cmd[:error].include?('Access is denied')).to eq(true)
 	expect(cmd[:exit_code]).to_not eq(0)
-  end
-
-  it 'with an administrative user set, the command should succeed' do
-    cmd = CMD.new('net session', { quiet: true, admin_user: 'john', debug: true })
-	expect(cmd[:error].include?('Access is denied')).to eq(false)
-	#expect(cmd[:exit_code]).to eq(0)
   end
 end

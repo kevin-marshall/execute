@@ -1,28 +1,51 @@
 require 'open3'
+require 'sys/proctable'
+require_relative 'IOAdapter.rb'
 
 class CMD < Hash
+  private 
+  @@default_options = nil
+  
+  def self.initialize_defaults
+    @@default_options = { echo_command: true, echo_output: true, ignore_exit_code: false, debug: false }
+  end
+
+  public
   def initialize(cmd, options=nil)
    self[:output] = ''
    self[:error] = ''
-   self[:ignore_exit_code] = false
-   self[:debug] = false
-   self[:quiet] = false
-
+   initialize_defaults if(@@default_options.nil?)
+   
+   @@default_options.each { |key, value| self[key] = value}
    options.each { |key, value| self[key] = value} unless(options.nil?)
    self[:command]=cmd
   end
   
+  public
+  def self.default_options(hash)
+    initialize_defaults
+	hash.each { |key, value| @@default_options[key] = value}
+  end
+  
   def execute
-    begin
-	  puts self[:command] unless(self[:quiet])
-	  cmd = self[:command]
-	  cmd = "runas /savecred /user:#{self[:admin_user]} \"#{cmd}\"" if(has_key?(:admin_user))
-      self[:output],self[:error], self[:exit_code] = Open3.capture3(cmd, :stdin_data => STDIN)
-      self[:exit_code]=self[:exit_code].to_i
-	rescue Exception => e
-	  self[:error] = "Exception: " + e.to_s
-	  self[:exit_code]=1 unless(has_key?(:exit_code))
-	end
+    #begin
+	  puts self[:command] if(self[:echo_command])
+	
+	  output = {output: [], error:  [] }
+	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
+		{:output => stdout,:error => stderr}.each do |key, stream|
+		  Thread.new do
+			until(raw_line = stream.gets).nil? do
+			  output[key] << raw_line
+			  puts raw_line if(self[:echo_output])
+			end
+		  end
+		end
+		wait_thr.join
+	    self[:output] = output[:output].join
+	    self[:error] = output[:error].join
+		self[:exit_code] = wait_thr.value.to_i
+	  end
 
 	if(self[:debug])
 	  puts "command: #{self[:command]}" if(self[:quiet])
