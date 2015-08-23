@@ -30,4 +30,11 @@ describe 'CMD' do
 	expect(cmd[:error].include?('Access is denied')).to eq(true)
 	expect(cmd[:exit_code]).to_not eq(0)
   end
+  
+  it 'should be able to set ignore exit code' do
+    cmd = CMD.new('net session', {ignore_exit_code: true})
+	cmd.execute
+	expect(cmd[:error].include?('Access is denied')).to eq(true)
+	expect(cmd[:exit_code]).to_not eq(0)
+  end
 end
