@@ -12,7 +12,7 @@ class CMD < Hash
 
   public
   def initialize(cmd, options=nil)
-   initialize_defaults if(@@default_options.nil?)
+   self.initialize_defaults if(@@default_options.nil?)
    self[:output] = ''
    self[:error] = ''
    
@@ -23,7 +23,7 @@ class CMD < Hash
   
   public
   def self.default_options(hash)
-    initialize_defaults
+    self.initialize_defaults
 	hash.each { |key, value| @@default_options[key] = value}
   end
   
