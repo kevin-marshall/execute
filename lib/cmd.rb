@@ -43,7 +43,7 @@ class CMD < Hash
 	    self[:error] = output[:error].join
 		self[:exit_code] = wait_thr.value.to_i
 	  end
-	rescue Excpetion => e
+	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end

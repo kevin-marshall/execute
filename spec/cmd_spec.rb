@@ -12,11 +12,7 @@ describe 'CMD' do
 
   it 'should fail executing: isnotacommand' do
     cmd = CMD.new('isnotacommand')
-	begin
-		cmd.execute
-		expect(true).to eq(false)
-	rescue
-	end
+	expect { cmd.execute }.to raise_error(Exception,/Exit code:/)
 	expect(cmd[:exit_code]).to_not eq(0)
   end
   
