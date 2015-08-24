@@ -23,9 +23,11 @@ class CMD < Hash
   end
   
   def execute
-    begin
+    self[:output] = ''
+	self[:error] = ''
+	begin
 	  puts self[:command] if(self[:echo_command])
-	
+		  
 	  output = {output: [], error:  [] }
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
 		{:output => stdout,:error => stderr}.each do |key, stream|
@@ -55,7 +57,7 @@ class CMD < Hash
 	
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = self[:error]
-	  exception_text = self[:output] if(self[:error].nil? || self[:error].empty?)
+	  exception_text = self[:output] if(self[:error].empty?)
 	  raise exception_text 
 	end
   end
