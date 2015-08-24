@@ -56,8 +56,9 @@ class CMD < Hash
 	end
 	
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
-	  exception_text = self[:error]
-	  exception_text = self[:output] if(self[:error].empty?)
+	  exception_text = "Exit code: #{self[:exit_code]}"
+	  exception_text = "#{exception_text}\n#{self[:error]}"
+	  exception_text = "#{exception_text}\n#{self[:output]}" if(self[:error].empty?)
 	  raise exception_text 
 	end
   end
