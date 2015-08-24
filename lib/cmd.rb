@@ -4,15 +4,11 @@ require_relative 'IOAdapter.rb'
 
 class CMD < Hash
   private 
-  @@default_options = nil
+  @@default_options = { echo_command: true, echo_output: true, ignore_exit_code: false, debug: false }
   
-  def self.initialize_defaults
-    @@default_options = { echo_command: true, echo_output: true, ignore_exit_code: false, debug: false }
-  end
-
   public
   def initialize(cmd, options=nil)
-   self.initialize_defaults if(@@default_options.nil?)
+   initialize_defaults if(@@default_options.nil?)
    self[:output] = ''
    self[:error] = ''
    
@@ -23,7 +19,6 @@ class CMD < Hash
   
   public
   def self.default_options(hash)
-    self.initialize_defaults
 	hash.each { |key, value| @@default_options[key] = value}
   end
   
