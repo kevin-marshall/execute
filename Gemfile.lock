@@ -28,3 +28,4 @@ DEPENDENCIES
   dev
   rake
   rspec
+  sys-proctable (>= 0.9.8)

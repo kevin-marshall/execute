@@ -25,9 +25,10 @@ Gem::Specification.new do |s|
     s.required_ruby_version = '>= 1.9.1'
 	s.files         = Dir["LICENSE","README.md","lib/**/*","example/**/*"]
 	s.license       = 'Apache 2.0'
-	s.require_path  = 'lib'
+	s.require_path  = 'lib' 
     s.add_development_dependency 'bundler', '~> 0'
 	s.add_development_dependency 'rake', '~> 0'
 	s.add_development_dependency 'rspec', '~> 0'
 	s.add_development_dependency 'dev', '~> 0'
+	s.add_runtime_dependency 'sys-proctable', '>= 0.9.8'
 end
