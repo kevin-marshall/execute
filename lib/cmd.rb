@@ -58,11 +58,13 @@ class CMD < Hash
 	    # reading input until the child process ends
         Thread.new do
 		  while wait_thr.alive? do
-		    #begin
-              stdin.puts $stdin.gets while wait_thr.alive?
-		    #rescue Interrupt, Errno::EINTR
-            #  exit(1)
-            #end
+		    begin
+			  c = $stdin.gets
+			  puts "char: #{c}"
+              stdin.puts c
+		    rescue Interrupt, Errno::EINTR
+              exit(1)
+            end
 		  end
         end
 		
