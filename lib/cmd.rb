@@ -59,6 +59,7 @@ class CMD < Hash
         Thread.new do
 		  while wait_thr.alive? do
 		    begin
+			  puts "HERE"
 			  c = $stdin.gets
 			  puts "char: #{c}"
               stdin.puts c
