@@ -40,12 +40,32 @@ class CMD < Hash
 	  Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
 		{:output => stdout,:error => stderr}.each do |key, stream|
 		  Thread.new do
-			until(char = stream.getc).nil? do
-			  output[key] << char
-			  putc char if(hash[:echo_output])
+			while wait_thr.alive? do
+			  if(!(char = stream.getc).nil?)
+  			    output[key] << char
+			    putc char if(hash[:echo_output])
+			  else
+			    sleep(0.1)
+			  end
 			end
 		  end
 		end
+		
+	    # $stdin.gets reads from the console
+	    # stdin.puts writes to child process
+	    #
+	    # while thread.alive? means that we keep on
+	    # reading input until the child process ends
+        Thread.new do
+		  while wait_thr.alive? do
+		    begin
+              stdin.puts $stdin.gets while wait_thr.alive?
+		    rescue Interrupt, Errno::EINTR
+              exit(1)
+            end
+		  end
+        end
+		
 		wait_thr.join
 	    hash[:output] = output[:output].join
 	    hash[:error] = output[:error].join
