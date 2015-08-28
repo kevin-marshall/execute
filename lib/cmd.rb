@@ -22,16 +22,17 @@ class CMD < Hash
   end
 
   def execute
-	system(self, self[:command])
+	windows_command(self, self[:command])
   end
   
   def execute_as(username)
+    raise "Unsported on operating system #{RbConfig::CONFIG["host_os"]}" unless(RbConfig::CONFIG["host_os"].include?("mingw"))
     cmd = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
-	wait_on_spawned_process(cmd) { system(self, cmd) }
+	wait_on_spawned_process(cmd) { windows_command(self, cmd) }
   end
   
   private
-  def system(hash, cmd)
+  def windows_command(hash, cmd)
 	begin
 	  puts cmd if(hash[:echo_command] || hash[:debug])
 		  

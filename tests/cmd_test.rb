@@ -11,7 +11,6 @@ class CMD_test < MiniTest::Unit::TestCase
   end
   
   def test_command
-    puts "OS: #{RbConfig::CONFIG["host_os"]}"
     cmd = CMD.new('dir')
 	cmd.execute
 	assert(!cmd[:output].empty?)
