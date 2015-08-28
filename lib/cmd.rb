@@ -56,18 +56,18 @@ class CMD < Hash
 	    #
 	    # while thread.alive? means that we keep on
 	    # reading input until the child process ends
-        Thread.new do
-		  while wait_thr.alive? do
-		    begin
-			  puts "HERE"
-			  c = $stdin.gets
-			  puts "char: #{c}"
-              stdin.puts c
-		    rescue Interrupt, Errno::EINTR
-              exit(1)
-            end
-		  end
-        end
+        #Thread.new do
+		#  while wait_thr.alive? do
+		#    #begin
+		#	  puts "HERE"
+		#	  c = STDIN.gets
+		#	  puts "char: #{c}"
+        #      stdin.puts c
+		#    #rescue Interrupt, Errno::EINTR
+        #    #  exit(1)
+        #    #end
+		#  end
+        #end
 		
 		wait_thr.join
 	    hash[:output] = output[:output].join unless(output[:output].empty?)
