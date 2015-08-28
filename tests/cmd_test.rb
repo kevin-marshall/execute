@@ -4,11 +4,11 @@ require_relative('../lib/cmd.rb')
 #ADMINISTRATIVE_USER=''
 ADMINISTRATIVE_USER='kevin'
 
-class CMD_test < MiniTest::Test
+class CMD_test < MiniTest::Unit::TestCase
   def setup
-    CMD.default_options({ echo_command: false, echo_output: false, debug: false })
+    CMD.default_options({ echo_command: false, echo_output: false, debug: false})
   end
-
+  
   def test_command
     cmd = CMD.new('dir')
 	cmd.execute
