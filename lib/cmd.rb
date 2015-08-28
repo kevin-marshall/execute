@@ -67,8 +67,8 @@ class CMD < Hash
         end
 		
 		wait_thr.join
-	    hash[:output] = output[:output].join
-	    hash[:error] = output[:error].join
+	    hash[:output] = output[:output].join unless(output[:output].empty?)
+	    hash[:error] = output[:error].join unless(output[:error].empty?)
 		hash[:exit_code] = wait_thr.value.to_i
 	  end
 	rescue Exception => e
