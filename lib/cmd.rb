@@ -40,9 +40,9 @@ class CMD < Hash
 	  Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
 		{:output => stdout,:error => stderr}.each do |key, stream|
 		  Thread.new do
-			until(raw_line = stream.gets).nil? do
-			  output[key] << raw_line
-			  puts raw_line if(hash[:echo_output])
+			until(char = stream.getc).nil? do
+			  output[key] << char
+			  putc char if(hash[:echo_output])
 			end
 		  end
 		end
