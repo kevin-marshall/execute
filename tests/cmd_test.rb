@@ -1,5 +1,6 @@
 require 'minitest/autorun'
 require_relative('../lib/cmd.rb')
+require 'rbconfig'
 
 #ADMINISTRATIVE_USER=''
 ADMINISTRATIVE_USER='kevin'
@@ -10,6 +11,7 @@ class CMD_test < MiniTest::Unit::TestCase
   end
   
   def test_command
+    puts "OS: #{RbConfig::CONFIG["host_os"]}"
     cmd = CMD.new('dir')
 	cmd.execute
 	assert(!cmd[:output].empty?)

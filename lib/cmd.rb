@@ -1,6 +1,5 @@
 require 'open3'
 require 'sys/proctable'
-require_relative 'IOAdapter.rb'
 
 class CMD < Hash
   private 
