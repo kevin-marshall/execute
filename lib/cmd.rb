@@ -25,11 +25,11 @@ class CMD < Hash
 	windows_command(self, self[:command])
   end
   
-  def execute_as(username)
-    raise "Unsupported on operating system #{RbConfig::CONFIG["host_os"]}" unless(RbConfig::CONFIG["host_os"].include?("mingw"))
-    cmd = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
-	wait_on_spawned_process(cmd) { windows_command(self, cmd) }
-  end
+#  def execute_as(username)
+#    raise "Unsupported on operating system #{RbConfig::CONFIG["host_os"]}" unless(RbConfig::CONFIG["host_os"].include?("mingw"))
+#    cmd = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
+#	wait_on_spawned_process(cmd) { windows_command(self, cmd) }
+#  end
   
   private
   def windows_command(hash, cmd)
