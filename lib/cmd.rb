@@ -79,10 +79,10 @@ class CMD < Hash
 
     yield	
 
-	match = cmd.match(/\\(?<path>.+\.exe)/i)
+	match = cmd.match(/\"(?<path>.+\.exe)/i)
 	return if(match.nil?)
 	
-	exe = match.named_captures['path']
+	exe = match[:path]
 	exe = File.basename(exe)
 	#puts "Exe: #{exe}"
 	

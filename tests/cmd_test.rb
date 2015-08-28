@@ -42,4 +42,8 @@ class CMD_test < MiniTest::Unit::TestCase
 	assert(!cmd[:error].include?('Access is denied'))
 	assert(cmd[:exit_code] == 0)
   end
+  def test_msi
+    cmd = CMD.new('msiexec.exe /i C:\\Development\\wrk\\github\\execute\\tests\\files\\example.msi')
+	cmd.execute_as('kevin')
+  end
 end
