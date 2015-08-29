@@ -38,7 +38,8 @@ class CMD < Hash
 		  
 	  output = {output: [], error:  [] }
 	  Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
-		{:output => stdout,:error => stderr}.each do |key, stream|
+        hash[:pid] = wait_thr.pid 
+  	    {:output => stdout,:error => stderr}.each do |key, stream|
 		  Thread.new do
 			while wait_thr.alive? do
 			  if(!(char = stream.getc).nil?)
@@ -93,34 +94,71 @@ class CMD < Hash
 	  raise exception_text 
 	end
   end
-    
-  def wait_on_spawned_process(cmd)
-	pre_execute = Sys::ProcTable.ps
-	
-	pre_pids = []
-	pre_execute.each { |ps| pre_pids << ps.pid }
 
-    yield	
+  def wait_on_spawned_process(hash, cmd)
+	yield	
 
-	match = cmd.match(/\"(?<path>.+\.exe)/i)
-	return if(match.nil?)
+	post_execute = Sys::ProcTable.ps
+
+	parent_pid = nil
+    post_execute.each do |ps| 
+  	  parent_pid = ps.pid if(hash[:pid] == ps.pid)
+	end
 	
-	exe = match[:path]
-	exe = File.basename(exe)
+	return if(parent_pid.nil?)
+	
+	child_processes = []
+    post_execute.each do |ps| 
+  	  child_processes << ps.pid if(ps.include?(parent_pid))
+	end
+	  
+	trap("INT") do 
+	  child_processes.each do |pid|
+	    s = Sys::ProcTable.ps(pid)
+		begin
+		  Process.kill('Kill', s) unless(s.nil?)
+		rescue nil
+		end
+	  end
+	end
+	
+	loop do
+	  all_exited = false
+	  child_processes.each do |pid|
+	    s = Sys::ProcTable.ps(msiexe_pid)
+		all_exited = false unless(s.nil?)
+	  end
+	  break if(all_exited)
+	  sleep(0.2)
+	end
+  end
+  #def wait_on_spawned_process(cmd)
+  #	pre_execute = Sys::ProcTable.ps
+  #	
+  #	pre_pids = []
+  #	pre_execute.each { |ps| pre_pids << ps.pid }
+  #
+  #  yield	
+
+  #	match = cmd.match(/\"(?<path>.+\.exe)/i)
+  #	return if(match.nil?)
+	
+  #	exe = match[:path]
+  # exe = File.basename(exe)
 	#puts "Exe: #{exe}"
 	
-	msiexe_pid = 0
- 	post_execute = Sys::ProcTable.ps
-	post_execute.each do |ps| 
-	  msiexe_pid = ps.pid if((ps.name.downcase == exe.downcase) && pre_pids.index(ps.pid).nil?)
-	end
+  # msiexe_pid = 0
+  # post_execute = Sys::ProcTable.ps
+  # post_execute.each do |ps| 
+  #	  msiexe_pid = ps.pid if((ps.name.downcase == exe.downcase) && pre_pids.index(ps.pid).nil?)
+  # end
 
-	if(msiexe_pid != 0)
-	  loop do
-	    s = Sys::ProcTable.ps(msiexe_pid)
-		break if(s.nil?)
-		sleep(1)
-	  end
-	end  
-  end 
+  #if(msiexe_pid != 0)
+#	  loop do
+#	    s = Sys::ProcTable.ps(msiexe_pid)
+#		break if(s.nil?)
+#		sleep(1)
+#	  end
+#	end  
+ # end 
 end
