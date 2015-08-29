@@ -118,7 +118,7 @@ class CMD < Hash
 	end
 	
 	loop do
-	  all_exited = false
+	  all_exited = true
 	  child_processes.each do |pid|
 	    s = Sys::ProcTable.ps(pid)
 		all_exited = false unless(s.nil?)
