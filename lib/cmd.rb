@@ -25,11 +25,11 @@ class CMD < Hash
 	windows_command(self, self[:command])
   end
   
-#  def execute_as(username)
-#    raise "Unsupported on operating system #{RbConfig::CONFIG["host_os"]}" unless(RbConfig::CONFIG["host_os"].include?("mingw"))
-#    cmd = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
-#	wait_on_spawned_process(cmd) { windows_command(self, cmd) }
-#  end
+  def execute_as(username)
+    raise "Unsupported on operating system #{RbConfig::CONFIG["host_os"]}" unless(RbConfig::CONFIG["host_os"].include?("mingw"))
+    cmd = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
+	wait_on_spawned_process(self,cmd) { windows_command(self, cmd) }
+  end
   
   private
   def windows_command(hash, cmd)
@@ -97,68 +97,34 @@ class CMD < Hash
 
   def wait_on_spawned_process(hash, cmd)
 	yield	
-
 	post_execute = Sys::ProcTable.ps
-
-	parent_pid = nil
-    post_execute.each do |ps| 
-  	  parent_pid = ps.pid if(hash[:pid] == ps.pid)
-	end
-	
-	return if(parent_pid.nil?)
 	
 	child_processes = []
-    post_execute.each do |ps| 
-  	  child_processes << ps.pid if(ps.include?(parent_pid))
-	end
-	  
+    post_execute.each { |ps| child_processes << ps.pid if(ps.include?(hash[:pid])) }
+	
 	trap("INT") do 
 	  child_processes.each do |pid|
 	    s = Sys::ProcTable.ps(pid)
 		begin
-		  Process.kill('Kill', s) unless(s.nil?)
-		rescue nil
+		  if(!s.nil?)
+			out_rd,out_wr = IO.pipe
+			err_rd,err_wr = IO.pipe
+		    system("taskkill /pid #{pid}", :out => out_wr, :err => err_wr)
+		  end
+		rescue Exception => e
 		end
 	  end
+	  exit
 	end
 	
 	loop do
 	  all_exited = false
 	  child_processes.each do |pid|
-	    s = Sys::ProcTable.ps(msiexe_pid)
+	    s = Sys::ProcTable.ps(pid)
 		all_exited = false unless(s.nil?)
 	  end
 	  break if(all_exited)
 	  sleep(0.2)
 	end
   end
-  #def wait_on_spawned_process(cmd)
-  #	pre_execute = Sys::ProcTable.ps
-  #	
-  #	pre_pids = []
-  #	pre_execute.each { |ps| pre_pids << ps.pid }
-  #
-  #  yield	
-
-  #	match = cmd.match(/\"(?<path>.+\.exe)/i)
-  #	return if(match.nil?)
-	
-  #	exe = match[:path]
-  # exe = File.basename(exe)
-	#puts "Exe: #{exe}"
-	
-  # msiexe_pid = 0
-  # post_execute = Sys::ProcTable.ps
-  # post_execute.each do |ps| 
-  #	  msiexe_pid = ps.pid if((ps.name.downcase == exe.downcase) && pre_pids.index(ps.pid).nil?)
-  # end
-
-  #if(msiexe_pid != 0)
-#	  loop do
-#	    s = Sys::ProcTable.ps(msiexe_pid)
-#		break if(s.nil?)
-#		sleep(1)
-#	  end
-#	end  
- # end 
 end
