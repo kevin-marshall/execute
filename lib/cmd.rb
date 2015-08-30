@@ -22,53 +22,9 @@ class CMD < Hash
   end
 
   def execute
-	begin
-	  puts self[:command] if(self[:echo_command] || self[:debug])
-		  
-	  output = {output: [], error:  [] }
-	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
-        self[:pid] = wait_thr.pid 
-  	    {:output => stdout,:error => stderr}.each do |key, stream|
-		  Thread.new do
-			while wait_thr.alive? do
-			  if(!(char = stream.getc).nil?)
-  			    output[key] << char
-			    putc char if(self[:echo_output])
-			  else
-			    sleep(0.1)
-			  end
-			end
-		  end
-		end
-		
-	    # $stdin.gets reads from the console
-	    # stdin.puts writes to child process
-	    #
-	    # while thread.alive? means that we keep on
-	    # reading input until the child process ends
-        #Thread.new do
-		#  while wait_thr.alive? do
-		#    #begin
-		#	  puts "HERE"
-		#	  c = STDIN.gets
-		#	  puts "char: #{c}"
-        #      stdin.puts c
-		#    #rescue Interrupt, Errno::EINTR
-        #    #  exit(1)
-        #    #end
-		#  end
-        #end
-		
-		wait_thr.join
-	    self[:output] = output[:output].join unless(output[:output].empty?)
-	    self[:error] = output[:error].join unless(output[:error].empty?)
-		self[:exit_code] = wait_thr.value.to_i
-	  end
-	rescue Exception => e
-	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
-	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
-	end
-	
+	puts self[:command] if(self[:echo_command] || self[:debug])
+	system	  
+    	
 	if(self[:debug])
 	  puts "command: #{self[:command]}" if(self[:quiet])
 	  puts "output: #{self[:output]}"
@@ -81,6 +37,36 @@ class CMD < Hash
 	  exception_text = "#{exception_text}\n#{self[:error]}"
 	  exception_text = "#{exception_text}\n#{self[:output]}" if(self[:error].empty?)
 	  raise exception_text 
+	end
+  end
+
+  def system
+	begin
+      output = {output: [], error:  [] }
+	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
+        self[:pid] = wait_thr.pid 
+  	    {:output => stdout,:error => stderr}.each do |key, stream|
+          Thread.new do
+	        while wait_thr.alive? do
+		      if(!(char = stream.getc).nil?)
+		        output[key] << char
+			    putc char if(self[:echo_output])
+		      else
+		        sleep(0.1)
+			  end
+	        end
+		  end
+		end
+
+		wait_thr.join
+
+	    self[:output] = output[:output].join unless(output[:output].empty?)
+	    self[:error] = output[:error].join unless(output[:error].empty?)
+		self[:exit_code] = wait_thr.value.to_i
+	  end
+	rescue Exception => e
+	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
+	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
 end
