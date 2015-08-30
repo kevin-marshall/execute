@@ -2,9 +2,6 @@ require 'minitest/autorun'
 require_relative('../lib/cmd.rb')
 require 'rbconfig'
 
-#ADMINISTRATIVE_USER=''
-ADMINISTRATIVE_USER='kevin'
-
 class CMD_test < MiniTest::Unit::TestCase
   def setup
     CMD.default_options({ echo_command: false, echo_output: false, debug: false})
@@ -35,15 +32,4 @@ class CMD_test < MiniTest::Unit::TestCase
 	assert(cmd[:error].include?('Access is denied'))
 	assert(cmd[:exit_code] != 0)
   end
- 
- # def test_execute_as
- #   cmd = CMD.new('net session')
- #	cmd.execute_as('kevin')
- # 	assert(!cmd[:error].include?('Access is denied'))
- # 	assert(cmd[:exit_code] == 0)
- # end
- # def test_msi
- #   cmd = CMD.new('msiexec.exe /i C:\\Development\\wrk\\github\\execute\\tests\\files\\example.msi')
- #   cmd.execute_as('kevin')
- # end
 end

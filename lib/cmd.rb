@@ -22,29 +22,18 @@ class CMD < Hash
   end
 
   def execute
-	windows_command(self, self[:command])
-  end
-  
-  def execute_as(username)
-    raise "Unsupported on operating system #{RbConfig::CONFIG["host_os"]}" unless(RbConfig::CONFIG["host_os"].include?("mingw"))
-    cmd = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
-	wait_on_spawned_process(self,cmd) { windows_command(self, cmd) }
-  end
-  
-  private
-  def windows_command(hash, cmd)
 	begin
-	  puts cmd if(hash[:echo_command] || hash[:debug])
+	  puts self[:command] if(self[:echo_command] || self[:debug])
 		  
 	  output = {output: [], error:  [] }
-	  Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
-        hash[:pid] = wait_thr.pid 
+	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
+        self[:pid] = wait_thr.pid 
   	    {:output => stdout,:error => stderr}.each do |key, stream|
 		  Thread.new do
 			while wait_thr.alive? do
 			  if(!(char = stream.getc).nil?)
   			    output[key] << char
-			    putc char if(hash[:echo_output])
+			    putc char if(self[:echo_output])
 			  else
 			    sleep(0.1)
 			  end
@@ -71,60 +60,27 @@ class CMD < Hash
         #end
 		
 		wait_thr.join
-	    hash[:output] = output[:output].join unless(output[:output].empty?)
-	    hash[:error] = output[:error].join unless(output[:error].empty?)
-		hash[:exit_code] = wait_thr.value.to_i
+	    self[:output] = output[:output].join unless(output[:output].empty?)
+	    self[:error] = output[:error].join unless(output[:error].empty?)
+		self[:exit_code] = wait_thr.value.to_i
 	  end
 	rescue Exception => e
-	  hash[:error] = "#{hash[:error]}\nException: #{e.to_s}"
-	  hash[:exit_code]=1 unless(hash[:exit_code].nil? || (hash[:exit_code] == 0))
+	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
+	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
 	
-	if(hash[:debug])
-	  puts "command: #{cmd}" if(hash[:quiet])
-	  puts "output: #{hash[:output]}"
-	  puts "error: #{hash[:error]}"
-	  puts "exit_code: #{hash[:exit_code]}"
+	if(self[:debug])
+	  puts "command: #{self[:command]}" if(self[:quiet])
+	  puts "output: #{self[:output]}"
+	  puts "error: #{self[:error]}"
+	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	if((hash[:exit_code] != 0) && !hash[:ignore_exit_code])
-	  exception_text = "Exit code: #{hash[:exit_code]}"
-	  exception_text = "#{exception_text}\n#{hash[:error]}"
-	  exception_text = "#{exception_text}\n#{hash[:output]}" if(hash[:error].empty?)
+	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
+	  exception_text = "Exit code: #{self[:exit_code]}"
+	  exception_text = "#{exception_text}\n#{self[:error]}"
+	  exception_text = "#{exception_text}\n#{self[:output]}" if(self[:error].empty?)
 	  raise exception_text 
-	end
-  end
-
-  def wait_on_spawned_process(hash, cmd)
-	yield	
-	post_execute = Sys::ProcTable.ps
-	
-	child_processes = []
-    post_execute.each { |ps| child_processes << ps.pid if(ps.include?(hash[:pid])) }
-	
-	trap("INT") do 
-	  child_processes.each do |pid|
-	    s = Sys::ProcTable.ps(pid)
-		begin
-		  if(!s.nil?)
-			out_rd,out_wr = IO.pipe
-			err_rd,err_wr = IO.pipe
-		    system("taskkill /pid #{pid}", :out => out_wr, :err => err_wr)
-		  end
-		rescue Exception => e
-		end
-	  end
-	  exit
-	end
-	
-	loop do
-	  all_exited = true
-	  child_processes.each do |pid|
-	    s = Sys::ProcTable.ps(pid)
-		all_exited = false unless(s.nil?)
-	  end
-	  break if(all_exited)
-	  sleep(0.2)
 	end
   end
 end
