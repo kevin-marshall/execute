@@ -15,7 +15,7 @@
 #
 Gem::Specification.new do |s|
 	s.name			= 'execute'
-	s.version		= '0.1.28'
+	s.version		= '0.1.29'
 	s.summary		= 'Class wrapper for system commands'
 	s.description	= 'Class wrapper for system commands'
 	s.authors		= ["Kevin Marshall"]

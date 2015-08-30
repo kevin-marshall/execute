@@ -23,7 +23,7 @@ class CMD < Hash
 
   def execute
 	puts self[:command] if(self[:echo_command] || self[:debug])
-	system	  
+	system  
     	
 	if(self[:debug])
 	  puts "command: #{self[:command]}" if(self[:quiet])
@@ -69,4 +69,5 @@ class CMD < Hash
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
+  # Open3.capture3 hung on runas
 end
