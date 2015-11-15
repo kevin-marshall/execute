@@ -22,11 +22,16 @@ class CMD < Hash
   end
 
   def execute
+    if(self[:quiet])
+	  self[:echo_output] = false
+	  self[:echo_command] = false
+	end
+	
 	puts self[:command] if(self[:echo_command] || self[:debug])
 	system  
     	
 	if(self[:debug])
-	  puts "command: #{self[:command]}" if(self[:quiet])
+	  puts "command: #{self[:command]}"
 	  puts "output: #{self[:output]}"
 	  puts "error: #{self[:error]}"
 	  puts "exit_code: #{self[:exit_code]}"
