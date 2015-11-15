@@ -34,15 +34,15 @@ class CMD < Hash
 	
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
-	  exception_text = "#{exception_text}\n#{self[:error]}"
-	  exception_text = "#{exception_text}\n#{self[:output]}" if(self[:error].empty?)
-	  raise exception_text 
+	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
+	  exception_text = "#{exception_text}\nOutput: '#{self[:output]}'"
+	  raise Exception.new(exception_text) 
 	end
   end
 
   def system
 	begin
-      output = {output: [], error:  [] }
+      output = {output: [], error: [] }
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
         self[:pid] = wait_thr.pid 
   	    {:output => stdout,:error => stderr}.each do |key, stream|

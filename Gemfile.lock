@@ -29,3 +29,6 @@ DEPENDENCIES
   rake
   rspec
   sys-proctable (>= 0.9.8)
+
+BUNDLED WITH
+   1.10.6

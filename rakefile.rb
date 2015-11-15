@@ -1,11 +1,12 @@
 require 'dev'
+require 'rbconfig'
 
 task :test do
 	Dir.chdir('tests') do |dir|
-	  tests = Dir.glob('*_test.rb').each do |file|
-	    cmd = Command.new("ruby #{file}")
-		cmd.execute
-	  end
+	  cmd = Command.new("#{RbConfig::CONFIG['bindir']}/ruby.exe all_tests.rb")
+	  cmd.execute
+	  
+	  puts "Output: #{cmd[:output]}"
 	end
 end
 
