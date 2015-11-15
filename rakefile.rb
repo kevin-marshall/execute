@@ -5,8 +5,6 @@ task :test do
 	Dir.chdir('tests') do |dir|
 	  cmd = Command.new("#{RbConfig::CONFIG['bindir']}/ruby.exe all_tests.rb")
 	  cmd.execute
-	  
-	  puts "Output: #{cmd[:output]}"
 	end
 end
 
