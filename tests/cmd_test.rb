@@ -16,12 +16,12 @@ class CMD_test < MiniTest::Unit::TestCase
 
   def test_invalid_command
     cmd = CMD.new('isnotacommand')
-	assert_raises(Exception) { cmd.execute }
+	assert_raises(StandardError) { cmd.execute }
   end
 
   def test_command_with_error
     cmd = CMD.new('net session')
-	assert_raises(Exception) { cmd.execute }
+	assert_raises(StandardError) { cmd.execute }
 	assert(cmd[:error].include?('Access is denied'))
 	assert(cmd[:exit_code] != 0)
   end

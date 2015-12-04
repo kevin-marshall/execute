@@ -25,7 +25,7 @@ class CMD < Hash
 			err_rd,err_wr = IO.pipe
 			system("taskkill /pid #{pid}", :out => out_wr, :err => err_wr)
 		  end
-		rescue Exception => e
+		rescue => e
 		end
 	  end
 	  exit

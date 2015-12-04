@@ -8,5 +8,5 @@ loop do
   sleep(1)
 end
 end
-rescue Exception => e
+rescue => e
 end

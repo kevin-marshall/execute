@@ -41,7 +41,7 @@ class CMD < Hash
 	  exception_text = "Exit code: #{self[:exit_code]}"
 	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
 	  exception_text = "#{exception_text}\nOutput: '#{self[:output]}'"
-	  raise Exception.new(exception_text) 
+	  raise StandardError.new(exception_text) 
 	end
   end
 
@@ -69,7 +69,7 @@ class CMD < Hash
 	    self[:error] = output[:error].join unless(output[:error].empty?)
 		self[:exit_code] = wait_thr.value.to_i
 	  end
-	rescue Exception => e
+	rescue => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
