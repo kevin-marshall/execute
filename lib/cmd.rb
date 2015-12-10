@@ -37,7 +37,6 @@ class CMD < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	puts "exit_code: #{self[:exit_code]}"
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
 	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
