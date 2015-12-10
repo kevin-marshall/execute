@@ -15,7 +15,7 @@ class CMD_test < MiniTest::Unit::TestCase
   end
 
   def test_invalid_command
-    cmd = CMD.new('isnotacommand')
+    cmd = CMD.new('isnotacommand', {debug: true})
 	assert_raises(StandardError) { cmd.execute }
   end
 

@@ -37,6 +37,7 @@ class CMD < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
+	puts "exit_code: #{self[:exit_code]}"
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
 	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
@@ -48,14 +49,20 @@ class CMD < Hash
   def system
 	begin
       output = {output: [], error: [] }
+	  
+	  #Thread.abort_on_exception = true
+	  mutex = Mutex.new
+	  
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
         self[:pid] = wait_thr.pid 
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           Thread.new do
 	        while wait_thr.alive? do
 		      if(!(char = stream.getc).nil?)
-		        output[key] << char
-			    putc char if(self[:echo_output])
+			    mutex.synchronize do
+		          output[key] << char
+			      putc char if(self[:echo_output])
+				end
 		      else
 		        sleep(0.1)
 			  end
@@ -69,6 +76,9 @@ class CMD < Hash
 	    self[:error] = output[:error].join unless(output[:error].empty?)
 		self[:exit_code] = wait_thr.value.to_i
 	  end
+	rescue Exception => e
+	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
+	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	rescue => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
