@@ -48,21 +48,25 @@ class CMD < Hash
 
   def system
 	begin
-      output = {output: [], error: [] }
-	  
-	  #Thread.abort_on_exception = true
+      output = ''
+	  error = ''  
+	  Thread.abort_on_exception = true
 	  mutex = Mutex.new
 	  
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
         self[:pid] = wait_thr.pid 
   	    {:output => stdout,:error => stderr}.each do |key, stream|
-          Thread.new do
-	        while wait_thr.alive? do
+          Thread.new do			    
+		    while wait_thr.alive? do
 		      if(!(char = stream.getc).nil?)
-			    mutex.synchronize do
-		          output[key] << char
-			      putc char if(self[:echo_output])
-				end
+			    case key
+			      when :output
+			        output << char
+			      when :error
+			        error << char
+			    end
+
+			    mutex.synchronize { putc char if(self[:echo_output]) }
 		      else
 		        sleep(0.1)
 			  end
@@ -72,8 +76,8 @@ class CMD < Hash
 
 		wait_thr.join
 
-	    self[:output] = output[:output].join unless(output[:output].empty?)
-	    self[:error] = output[:error].join unless(output[:error].empty?)
+	    self[:output] = output unless(output.empty?)
+	    self[:error] = error unless(error.empty?)
 		self[:exit_code] = wait_thr.value.to_i
 	  end
 	rescue Exception => e
