@@ -1,5 +1,6 @@
 require 'open3'
 require 'sys/proctable'
+require_relative 'timeout_error.rb'
 
 class CMD < Hash
   private 
@@ -37,6 +38,7 @@ class CMD < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
+	raise TimeoutError.new(self[:command], self[:timeout]) if(key?(:timed_out))
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
 	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
@@ -54,9 +56,24 @@ class CMD < Hash
 	  
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
         self[:pid] = wait_thr.pid 
+		
+		if(key?(:timeout))
+		  start_time = Time.now
+		  Thread.new do
+		    while wait_thr.alive? do
+ 		      sleep(0.1)
+			  if((Time.now - start_time).to_f > self[:timeout])
+				self[:timed_out] = true
+				Process.kill('KILL',wait_thr.pid)
+				sleep(0.1)
+			  end
+			end
+		  end
+        end
+		
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           Thread.new do			    
-		    while wait_thr.alive? do
+		    while wait_thr.alive? && !key?(:timed_out) do
 		      if(!(char = stream.getc).nil?)
 			    case key
 			      when :output
@@ -75,9 +92,9 @@ class CMD < Hash
 
 		wait_thr.join
 
-	    self[:output] = output unless(output.empty?)
-	    self[:error] = error unless(error.empty?)
-		self[:exit_code] = wait_thr.value.to_i
+	    self[:output] = output unless(output.empty?)			    
+		self[:error] = error unless(error.empty?)
+		self[:exit_code] = wait_thr.value.to_i		
 	  end
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"

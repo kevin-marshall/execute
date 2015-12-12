@@ -1,6 +1,7 @@
 require 'minitest/autorun'
 require_relative('../lib/cmd.rb')
 require 'rbconfig'
+require 'benchmark'
 
 class CMD_test < MiniTest::Unit::TestCase
   def setup
@@ -11,11 +12,22 @@ class CMD_test < MiniTest::Unit::TestCase
     cmd = CMD.new('dir')
 	cmd.execute
 	assert(!cmd[:output].empty?)
-	assert(true, cmd[:output].include?('Directory'))
+	assert(cmd[:output].include?('Directory'))
   end
 
+  def test_timeout
+    timeout = 1
+    ellapsed_time = Benchmark.realtime do
+	  assert_raises(TimeoutError) {
+	    cmd = CMD.new('ping -t localhost', { timeout: timeout })
+	    cmd.execute
+	  }
+	end
+	assert(ellapsed_time < timeout*1.1, "Expected command to timeout in #{timeout} second(s)")	
+  end
+  
   def test_invalid_command
-    cmd = CMD.new('isnotacommand', {debug: true})
+    cmd = CMD.new('isnotacommand')
 	assert_raises(StandardError) { cmd.execute }
   end
 
