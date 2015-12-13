@@ -17,7 +17,7 @@ class CMD_test < MiniTest::Unit::TestCase
   end
 
   def test_interrupt
-	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe')
+	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe', { timeout_signal: 'KILL' })
     Thread.new do
 	  begin
 		cmd.execute
@@ -36,7 +36,7 @@ class CMD_test < MiniTest::Unit::TestCase
   
   def test_timeout
     timeout = 1
-	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe', { timeout: timeout })
+	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe', { timeout: timeout, timeout_signal: 'KILL' })
 	assert_raises(TimeoutError) { cmd.execute }
 	assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
  
