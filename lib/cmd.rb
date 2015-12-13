@@ -125,11 +125,20 @@ class CMD < Hash
 	end
   end
   def interrupt
-    process = []
-	Sys::ProcTable.ps { |p| process << p  if(p.ppid == self[:pid]) }
+    process = get_child_processes(self[:pid])
 	Sys::ProcTable.ps { |p| process << p  if(p.pid == self[:pid]) }
 
 	process.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
 	Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
+  end
+  def get_child_processes(pid)
+	processes = []
+	Sys::ProcTable.ps do |p| 
+	  if(p.ppid == pid) 
+		get_child_processes(p.pid).each { |cp| processes << cp }
+		processes << p
+	  end
+	end
+	return processes
   end
 end
