@@ -84,7 +84,7 @@ class CMD < Hash
  		      sleep(0.1)
 			  if((Time.now - start_time).to_f > self[:timeout])
 				self[:timed_out] = true
-				interrupt_process
+				interrupt
 				sleep(0.1)
 			  end
 			end
@@ -124,7 +124,7 @@ class CMD < Hash
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
-  def interrupt_process
+  def interrupt
     process = []
 	Sys::ProcTable.ps { |p| process << p  if(p.ppid == self[:pid]) }
 	Sys::ProcTable.ps { |p| process << p  if(p.pid == self[:pid]) }

@@ -16,7 +16,7 @@ class CMD_test < MiniTest::Unit::TestCase
 	assert(cmd[:output].include?('Directory'))
   end
 
-  def test_interrupt_process
+  def test_interrupt
 	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe')
     Thread.new do
 	  begin
@@ -26,7 +26,7 @@ class CMD_test < MiniTest::Unit::TestCase
 	end
 	
 	sleep(1)
-	cmd.interrupt_process
+	cmd.interrupt
 	assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
  
     notepad_is_running = false
