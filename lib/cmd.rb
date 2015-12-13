@@ -12,6 +12,25 @@ class CMD < Hash
    self[:output] = ''
    self[:error] = ''
    
+   #1) SIGHUP       2) SIGINT       3) SIGQUIT      4) SIGILL
+   #5) SIGTRAP      6) SIGABRT      7) SIGBUS       8) SIGFPE
+   #9) SIGKILL     10) SIGUSR1     11) SIGSEGV     12) SIGUSR2
+   #13) SIGPIPE     14) SIGALRM     15) SIGTERM     17) SIGCHLD
+   #18) SIGCONT     19) SIGSTOP     20) SIGTSTP     21) SIGTTIN
+   #22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
+   #26) SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO
+   #30) SIGPWR      31) SIGSYS      34) SIGRTMIN    35) SIGRTMIN+1
+   #36) SIGRTMIN+2  37) SIGRTMIN+3  38) SIGRTMIN+4  39) SIGRTMIN+5
+   #40) SIGRTMIN+6  41) SIGRTMIN+7  42) SIGRTMIN+8  43) SIGRTMIN+9
+   #44) SIGRTMIN+10 45) SIGRTMIN+11 46) SIGRTMIN+12 47) SIGRTMIN+13
+   #48) SIGRTMIN+14 49) SIGRTMIN+15 50) SIGRTMAX-14 51) SIGRTMAX-13
+   #52) SIGRTMAX-12 53) SIGRTMAX-11 54) SIGRTMAX-10 55) SIGRTMAX-9
+   #56) SIGRTMAX-8  57) SIGRTMAX-7  58) SIGRTMAX-6  59) SIGRTMAX-5
+   #60) SIGRTMAX-4  61) SIGRTMAX-3  62) SIGRTMAX-2  63) SIGRTMAX-1
+   #64) SIGRTMAX
+   self[:timeout_signal] = 9
+   self[:timeout_raise_error] = true
+   
    @@default_options.each { |key, value| self[key] = value}
    options.each { |key, value| self[key] = value} unless(options.nil?)
    self[:command]=cmd
@@ -38,7 +57,8 @@ class CMD < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	raise TimeoutError.new(self[:command], self[:timeout]) if(key?(:timed_out))
+	raise TimeoutError.new(self[:command], self[:timeout]) if(key?(:timed_out) && self[:timeout_raise_error])
+
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
 	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
@@ -64,7 +84,7 @@ class CMD < Hash
  		      sleep(0.1)
 			  if((Time.now - start_time).to_f > self[:timeout])
 				self[:timed_out] = true
-				Process.kill('KILL',wait_thr.pid)
+				interrupt_process
 				sleep(0.1)
 			  end
 			end
@@ -104,5 +124,12 @@ class CMD < Hash
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
-  # Open3.capture3 hung on runas
+  def interrupt_process
+    process = []
+	Sys::ProcTable.ps { |p| process << p  if(p.ppid == self[:pid]) }
+	Sys::ProcTable.ps { |p| process << p  if(p.pid == self[:pid]) }
+
+	process.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
+	Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
+  end
 end

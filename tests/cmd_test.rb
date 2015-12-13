@@ -2,6 +2,7 @@ require 'minitest/autorun'
 require_relative('../lib/cmd.rb')
 require 'rbconfig'
 require 'benchmark'
+require 'sys/proctable'
 
 class CMD_test < MiniTest::Unit::TestCase
   def setup
@@ -15,15 +16,33 @@ class CMD_test < MiniTest::Unit::TestCase
 	assert(cmd[:output].include?('Directory'))
   end
 
+  def test_interrupt_process
+	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe')
+    Thread.new do
+	  begin
+		cmd.execute
+      rescue => e
+	  end
+	end
+	
+	sleep(1)
+	cmd.interrupt_process
+	assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
+ 
+    notepad_is_running = false
+	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
+	assert(!notepad_is_running, "Notepad should have been killed when the commnad timed out")
+  end
+  
   def test_timeout
     timeout = 1
-    ellapsed_time = Benchmark.realtime do
-	  assert_raises(TimeoutError) {
-	    cmd = CMD.new('ping -t localhost', { timeout: timeout })
-	    cmd.execute
-	  }
-	end
-	assert(ellapsed_time < timeout*1.1, "Expected command to timeout in #{timeout} second(s)")	
+	cmd = CMD.new('cmd /k C:\Windows\Notepad.exe', { timeout: timeout })
+	assert_raises(TimeoutError) { cmd.execute }
+	assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
+ 
+    notepad_is_running = false
+	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
+	assert(!notepad_is_running, "Notepad should have been killed when the commnad timed out")
   end
   
   def test_invalid_command
