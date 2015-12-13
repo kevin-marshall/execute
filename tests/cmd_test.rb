@@ -2,6 +2,7 @@ require 'minitest/autorun'
 require_relative('../lib/cmd.rb')
 require 'rbconfig'
 require 'benchmark'
+require 'timeout'
 require 'sys/proctable'
 
 class CMD_test < MiniTest::Unit::TestCase

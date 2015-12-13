@@ -1,6 +1,6 @@
 require 'open3'
 require 'sys/proctable'
-require_relative 'timeout_error.rb'
+require 'timeout'
 
 class CMD < Hash
   private 
@@ -57,7 +57,7 @@ class CMD < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	raise TimeoutError.new(self[:command], self[:timeout]) if(key?(:timed_out) && self[:timeout_raise_error])
+	raise TimeoutError.new("#{self[:command]} timeout: #{self[:timeout]}") if(key?(:timed_out) && self[:timeout_raise_error])
 
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
