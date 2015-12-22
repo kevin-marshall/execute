@@ -118,9 +118,6 @@ class CMD < Hash
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
-	rescue => e
-	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
-	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
   def interrupt
