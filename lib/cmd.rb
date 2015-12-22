@@ -98,11 +98,10 @@ class CMD < Hash
 			    case key
 			      when :output
 			        output << char
+					putc char if(self[:echo_output])
 			      when :error
 			        error << char
 			    end
-
-			    mutex.synchronize { putc char if(self[:echo_output]) }
 		      else
 		        sleep(0.1)
 			  end
@@ -111,6 +110,11 @@ class CMD < Hash
 		end
 
 		wait_thr.join
+					
+		if(self[:echo_output] && !error.empty?)
+		  puts ''
+		  puts self[:error] 
+		end
 
 	    self[:output] = output unless(output.empty?)			    
 		self[:error] = error unless(error.empty?)
