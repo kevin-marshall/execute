@@ -93,7 +93,7 @@ class CMD < Hash
 		
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           Thread.new do			    
-		    while wait_thr.alive? && !key?(:timed_out) do
+		    while wait_thr.alive? && !key?(:timed_out) && !stream.closed? do
 		      if(!(char = stream.getc).nil?)
 			    case key
 			      when :output
@@ -122,6 +122,7 @@ class CMD < Hash
   end
   def interrupt
     process = get_child_processes(self[:pid])
+	
 	Sys::ProcTable.ps { |p| process << p  if(p.pid == self[:pid]) }
 
 	process.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
