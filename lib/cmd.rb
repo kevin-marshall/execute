@@ -94,7 +94,7 @@ class CMD < Hash
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           Thread.new do			    
 		    while wait_thr.alive? && !key?(:timed_out) do
-		      if(!(char = stream.getc).nil?)
+		      if(!stream.closed? && !(char = stream.getc).nil?)
 			    case key
 			      when :output
 			        output << char
