@@ -146,7 +146,7 @@ class CMD < Hash
 	    self[:exit_code] = status.to_i	
 	  end
 	  
-	  puts self[:output] if(self[:echo_output])
+	  puts self[:output] if(self[:echo_output] && !self[:output].empty?)
 	  
 	  raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 	rescue Exception => e
