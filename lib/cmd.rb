@@ -145,7 +145,9 @@ class CMD < Hash
 	    self[:output], self[:error], status = Open3.capture3(self[:command])
 	    self[:exit_code] = status.to_i	
 	  end
-	  	
+	  
+	  puts self[:output] if(self[:echo_output])
+	  
 	  raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
