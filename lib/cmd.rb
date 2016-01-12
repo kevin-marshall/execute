@@ -1,6 +1,7 @@
 require 'open3'
 require 'sys/proctable'
 require 'timeout'
+require 'benchmark'
 
 class CMD < Hash
   private 
