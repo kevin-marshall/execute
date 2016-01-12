@@ -32,7 +32,7 @@ class CMD_test < MiniTest::Unit::TestCase
  
     notepad_is_running = false
 	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
-	assert(!notepad_is_running, "Notepad should have been killed when the commnad timed out")
+	assert(!notepad_is_running, "Notepad should have been killed when the command timed out")
   end
   
   def test_timeout
@@ -43,7 +43,7 @@ class CMD_test < MiniTest::Unit::TestCase
  
     notepad_is_running = false
 	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
-	assert(!notepad_is_running, "Notepad should have been killed when the commnad timed out")
+	assert(!notepad_is_running, "Notepad should have been killed when the command timed out")
   end
   
   def test_invalid_command

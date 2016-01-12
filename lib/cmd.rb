@@ -49,8 +49,8 @@ class CMD < Hash
 	end
 	
 	puts self[:command] if(self[:echo_command] || self[:debug])
-	#call_popen  
-    call_capture
+	self[:elapsed_time] = Benchmark.realtime { call_popen }
+	#self[:elapsed_time] = Benchmark.realtime { call_capture }
 	
 	if(self[:debug])
 	  puts "command: #{self[:command]}"
@@ -73,7 +73,6 @@ class CMD < Hash
 	begin
       output = ''
 	  error = ''  
-	  Thread.abort_on_exception = true
 	  mutex = Mutex.new
 	  
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
@@ -83,11 +82,10 @@ class CMD < Hash
 		  start_time = Time.now
 		  Thread.new do
 		    while wait_thr.alive? do
- 		      sleep(0.1)
 			  if((Time.now - start_time).to_f > self[:timeout])
 				self[:timed_out] = true
 				interrupt
-				sleep(0.1)
+				Thread.stop
 			  end
 			end
 		  end
@@ -95,18 +93,22 @@ class CMD < Hash
 		
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           Thread.new do			    
-		    while wait_thr.alive? && !key?(:timed_out) do
-		      if(!stream.closed? && !(char = stream.getc).nil?)
-			    case key
-			      when :output
-			        output << char
-					putc char if(self[:echo_output])
-			      when :error
-			        error << char
+		    begin
+		      while wait_thr.alive? && !key?(:timed_out) && !@stop_threads do
+		        unless(stream.closed?)
+			      unless((char = stream.getc).nil?)
+			        case key
+			          when :output
+			            output << char
+					    putc char if(self[:echo_output])
+			          when :error
+			            error << char
+			        end
+				  end
 			    end
-		      else
-		        sleep(0.1)
 			  end
+			rescue IOError
+			  Thread.stop
 	        end
 		  end
 		end
@@ -117,13 +119,15 @@ class CMD < Hash
 		self[:error] = error unless(error.empty?)
 		self[:exit_code] = wait_thr.value.to_i		
 	  end
+	rescue Interrupt => e
+	  interrupt
+	  raise e
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
   def call_capture
-    elapsed_time = nil
 	begin
       if(key?(:timeout))
 	    start_time = Time.now
@@ -141,10 +145,8 @@ class CMD < Hash
 	  end
 
 	  self[:output] = self[:error] = ''
-	  elapsed_time = Benchmark.realtime do
-	    self[:output], self[:error], status = Open3.capture3(self[:command])
-	    self[:exit_code] = status.to_i	
-	  end
+	  self[:output], self[:error], status = Open3.capture3(self[:command])
+	  self[:exit_code] = status.to_i	
 	  
 	  puts self[:output] if(self[:echo_output] && !self[:output].empty?)
 	  
@@ -152,8 +154,6 @@ class CMD < Hash
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(!self[:exit_code].nil? || (self[:exit_code] == 0))
-	ensure
-	  self[:elapsed_time] = elapsed_time unless(elapsed_time.nil?)
 	end
   end
   def command_pid
@@ -170,12 +170,12 @@ class CMD < Hash
     raise "Do not have a process id for #{self[:pid]}" unless(key?(:pid))
     processes = get_child_processes(self[:pid])
 	
-	Process.kill(self[:timeout_signal],self[:pid])
-	sleep(0.1)
+	Process.kill(self[:timeout_signal], self[:pid])
+	Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
+	
 	processes.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
-	#
-	#Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
   end
+
   def get_child_processes(pid)
 	processes = []
 	Sys::ProcTable.ps do |p| 
