@@ -48,7 +48,7 @@ class CMD < Hash
 	end
 	
 	puts self[:command] if(self[:echo_command] || self[:debug])
-	system  
+	call_popen  
     	
 	if(self[:debug])
 	  puts "command: #{self[:command]}"
@@ -67,7 +67,7 @@ class CMD < Hash
 	end
   end
 
-  def system
+  def call_popen
 	begin
       output = ''
 	  error = ''  
@@ -118,6 +118,27 @@ class CMD < Hash
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
+	end
+  end
+  def call_capture
+    elapsed_time = nil
+	begin
+	  elapsed_time = Benchmark.realtime do
+	    if(key?(:timeout))
+	      Timeout::timeout(self[:timeout]) do
+	        self[:output], self[:error], status = Open3.capture3(self[:cmd])
+		    self[:exit_code] = status.to_i	
+          end
+        else		
+	      self[:output], self[:error], status = Open3.capture3(self[:cmd])
+	      self[:exit_code] = status.to_i	
+	    end
+	  end
+	rescue Exception => e
+	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
+	  self[:exit_code]=1 unless(!self[:exit_code].nil? || (self[:exit_code] == 0))
+	ensure
+	  self[:elapsed_time] = elapsed_time unless(elapsed_time.nil?)
 	end
   end
   def interrupt
