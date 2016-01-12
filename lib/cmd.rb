@@ -48,8 +48,9 @@ class CMD < Hash
 	end
 	
 	puts self[:command] if(self[:echo_command] || self[:debug])
-	call_popen  
-    	
+	#call_popen  
+    call_capture
+	
 	if(self[:debug])
 	  puts "command: #{self[:command]}"
 	  puts "output: #{self[:output]}"
@@ -57,7 +58,7 @@ class CMD < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	raise TimeoutError.new("Commnad '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
+	raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Exit code: #{self[:exit_code]}"
@@ -123,17 +124,28 @@ class CMD < Hash
   def call_capture
     elapsed_time = nil
 	begin
-	  elapsed_time = Benchmark.realtime do
-	    if(key?(:timeout))
-	      Timeout::timeout(self[:timeout]) do
-	        self[:output], self[:error], status = Open3.capture3(self[:cmd])
-		    self[:exit_code] = status.to_i	
-          end
-        else		
-	      self[:output], self[:error], status = Open3.capture3(self[:cmd])
-	      self[:exit_code] = status.to_i	
-	    end
+      if(key?(:timeout))
+	    start_time = Time.now
+		Thread.new do
+		  while !key?(:exit_code) do
+		    sleep(0.1)			  
+			if((Time.now - start_time).to_f > self[:timeout])
+			  self[:timed_out] = true
+			  interrupt
+			  sleep(0.1)
+			  break
+			end
+		  end
+        end
 	  end
+
+	  self[:output] = self[:error] = ''
+	  elapsed_time = Benchmark.realtime do
+	    self[:output], self[:error], status = Open3.capture3(self[:command])
+	    self[:exit_code] = status.to_i	
+	  end
+	  	
+	  raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(!self[:exit_code].nil? || (self[:exit_code] == 0))
@@ -141,13 +153,25 @@ class CMD < Hash
 	  self[:elapsed_time] = elapsed_time unless(elapsed_time.nil?)
 	end
   end
-  def interrupt
-    process = get_child_processes(self[:pid])
-	
-	Sys::ProcTable.ps { |p| process << p  if(p.pid == self[:pid]) }
+  def command_pid
+  	Sys::ProcTable.ps do |p| 
+	  if(p.ppid == $$) 
+		return self[:pid] = p.pid
+	  end
+	end
 
-	process.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
-	Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
+	raise "Failed to find child process for command: '#{self[:command]}'"
+  end
+  def interrupt
+	self[:pid] = command_pid unless(key?(:pid))
+    raise "Do not have a process id for #{self[:pid]}" unless(key?(:pid))
+    processes = get_child_processes(self[:pid])
+	
+	Process.kill(self[:timeout_signal],self[:pid])
+	sleep(0.1)
+	processes.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
+	#
+	#Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
   end
   def get_child_processes(pid)
 	processes = []
