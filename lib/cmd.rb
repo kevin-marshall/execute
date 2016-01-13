@@ -119,9 +119,6 @@ class CMD < Hash
 		self[:error] = error unless(error.empty?)
 		self[:exit_code] = wait_thr.value.to_i		
 	  end
-	rescue Interrupt => e
-	  interrupt
-	  raise e
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
