@@ -1,8 +1,8 @@
 require 'open3'
 require 'sys/proctable'
-require_relative ('cmd')
+require_relative 'execute'
 
-class CMD < Hash
+class Execute < Hash
   def execute_as(username)
     self[:command] = "runas /noprofile /savecred /user:#{username} \"#{self[:command]}\""
 	wait_on_spawned_process(self) { self.execute }

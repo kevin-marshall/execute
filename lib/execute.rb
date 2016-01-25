@@ -3,7 +3,7 @@ require 'sys/proctable'
 require 'timeout'
 require 'benchmark'
 
-class CMD < Hash
+class Execute < Hash
   private 
   @@default_options = { echo_command: true, echo_output: true, ignore_exit_code: false, debug: false }
   
