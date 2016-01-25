@@ -35,7 +35,15 @@ class Execute_test < MiniTest::Unit::TestCase
 	assert(!notepad_is_running, "Notepad should have been killed when the command timed out")
   end
   
+  def running?(process_name)
+    running = false
+	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
+	return running
+  end
+  
   def test_timeout
+	assert(!running?('notepad.exe'), "An instance of Notepad is running, cannot perform test.")
+
     timeout = 1
 	cmd = Execute.new('cmd /k C:\Windows\Notepad.exe', { timeout: timeout, timeout_signal: 'KILL' })
 	assert_raises(TimeoutError) { cmd.execute }
@@ -43,7 +51,7 @@ class Execute_test < MiniTest::Unit::TestCase
  
     notepad_is_running = false
 	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
-	assert(!notepad_is_running, "Notepad should have been killed when the command timed out")
+	assert(!running?('notepad.exe'), "Notepad should have been killed when the command timed out")
   end
   
   def test_invalid_command
