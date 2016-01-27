@@ -87,6 +87,7 @@ class Execute < Hash
 				interrupt
 				Thread.stop
 			  end
+			  sleep(1)
 			end
 		  end
         end
@@ -96,7 +97,9 @@ class Execute < Hash
 		    begin
 		      while wait_thr.alive? && !key?(:timed_out) && !@stop_threads do
 		        unless(stream.closed?)
-			      unless((char = stream.getc).nil?)
+			      if((char = stream.getc).nil?)
+				    sleep(0.1)
+				  else
 			        case key
 			          when :output
 			            output << char
