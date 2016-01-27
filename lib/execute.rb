@@ -87,7 +87,7 @@ class Execute < Hash
 		  Thread.new do
 		    while wait_thr.alive? && !stop_threads do
 			  if((Time.now - start_time).to_f > timeout)
-				mutex.synchronize { self[:timed_out] = true }
+				self[:timed_out] = true
 				mutex.synchronize { stop_threads = true }
 				interrupt
 				Thread.stop
@@ -164,6 +164,19 @@ class Execute < Hash
 	  self[:exit_code]=1 unless(!self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
+  
+  def []=(key,value)
+    mutex = Mutex.new
+	mutex.synchronize { super(key, value) }
+  end
+
+  def [](key)
+    value = nil
+    mutex = Mutex.new
+	mutex.synchronize { value = super(key) }
+	return value
+  end
+ 
   def command_pid
   	Sys::ProcTable.ps do |p| 
 	  if(p.ppid == $$) 
