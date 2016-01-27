@@ -73,17 +73,22 @@ class Execute < Hash
 	begin
       output = ''
 	  error = ''  
+
 	  mutex = Mutex.new
+	  stop_threads = false
+	  timeout = nil
+	  timeout = self[:timeout] if(key?(:timeout))
 	  
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
         self[:pid] = wait_thr.pid 
 		
-		if(key?(:timeout))
+		unless(timeout.nil?)
 		  start_time = Time.now
 		  Thread.new do
-		    while wait_thr.alive? do
-			  if((Time.now - start_time).to_f > self[:timeout])
-				self[:timed_out] = true
+		    while wait_thr.alive? && !stop_threads do
+			  if((Time.now - start_time).to_f > timeout)
+				mutex.synchronize { self[:timed_out] = true }
+				mutex.synchronize { stop_threads = true }
 				interrupt
 				Thread.stop
 			  end
@@ -95,10 +100,11 @@ class Execute < Hash
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           Thread.new do			    
 		    begin
-		      while wait_thr.alive? && !key?(:timed_out) && !@stop_threads do
+		      while wait_thr.alive? && !stop_threads do
 		        unless(stream.closed?)
 			      if((char = stream.getc).nil?)
 				    sleep(0.1)
+					thread.pass
 				  else
 			        case key
 			          when :output
@@ -110,7 +116,9 @@ class Execute < Hash
 				  end
 			    end
 			  end
+			  mutex.synchronize { stop_threads = true }
 			rescue IOError
+			  mutex.synchronize { stop_threads = true }
 			  Thread.stop
 	        end
 		  end
