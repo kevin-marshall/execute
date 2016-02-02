@@ -74,6 +74,7 @@ class Execute < Hash
       output = ''
 	  error = ''  
 
+	  threads = []
 	  mutex = Mutex.new
 	  stop_threads = false
 	  timeout = nil
@@ -84,27 +85,37 @@ class Execute < Hash
 		
 		unless(timeout.nil?)
 		  start_time = Time.now
-		  Thread.new do
-		    while wait_thr.alive? && !stop_threads do
-			  if((Time.now - start_time).to_f > timeout)
-				self[:timed_out] = true
-				mutex.synchronize { stop_threads = true }
-				interrupt
-				Thread.stop
+		  end_loop = stop_threads
+		  threads << Thread.new do 
+		    begin
+		      while wait_thr.alive? && !end_loop do
+			    if((Time.now - start_time).to_f > timeout)
+				  self[:timed_out] = true
+				  mutex.synchronize { stop_threads = true }
+				  interrupt
+				  Thread.exit
+			    else
+			      sleep(1)
+			      Thread.pass
+			    end
+		        mutex.synchronize { end_loop = stop_threads }
 			  end
-			  sleep(1)
+			rescue Exception => e
+			  mutex.synchronize { stop_threads = true }
+			  Thread.exit			  
 			end
 		  end
         end
 		
   	    {:output => stdout,:error => stderr}.each do |key, stream|
-          Thread.new do			    
+          threads << Thread.new do		    
 		    begin
-		      while wait_thr.alive? && !stop_threads do
+		      end_loop = stop_threads 
+		      while wait_thr.alive? && !end_loop do
 		        unless(stream.closed?)
 			      if((char = stream.getc).nil?)
 				    sleep(0.1)
-					thread.pass
+					Thread.pass
 				  else
 			        case key
 			          when :output
@@ -115,24 +126,25 @@ class Execute < Hash
 			        end
 				  end
 			    end
+				mutex.synchronize { end_loop = stop_threads }
 			  end
 			  mutex.synchronize { stop_threads = true }
-			rescue IOError
+			rescue Exception
 			  mutex.synchronize { stop_threads = true }
-			  Thread.stop
+			  Thread.exit
 	        end
 		  end
 		end
 
-		wait_thr.join
-
+		threads.each { |thr| thr.join }
+		
 	    self[:output] = output unless(output.empty?)			    
 		self[:error] = error unless(error.empty?)
 		self[:exit_code] = wait_thr.value.to_i		
 	  end
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
-	  self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
+      self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
   end
   def call_capture
