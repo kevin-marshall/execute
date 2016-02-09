@@ -111,9 +111,12 @@ class Execute < Hash
           threads << Thread.new do		    
 		    begin
 		      end_loop = stop_threads 
+			  last_pass_time = Time.now
 		      while wait_thr.alive? && !end_loop do
 		        unless(stream.closed?)
-			      if((char = stream.getc).nil?)
+			      if(((char = stream.getc).nil?) || 
+				     ((Time.now - last_pass_time).to_f > 30))
+					last_pass_time = Time.now
 				    sleep(0.1)
 					Thread.pass
 				  else
