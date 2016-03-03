@@ -85,24 +85,21 @@ class Execute < Hash
 		
 		unless(timeout.nil?)
 		  start_time = Time.now
-		  end_loop = stop_threads
 		  threads << Thread.new do 
 		    begin
-		      while wait_thr.alive? && !end_loop do
+		      while wait_thr.alive? do
 			    if((Time.now - start_time).to_f > timeout)
-				  self[:timed_out] = true
-				  mutex.synchronize { stop_threads = true }
+				  self[:timed_out] = true 
 				  interrupt
-				  Thread.exit
+		          mutex.synchronize {stop_threads = true }
 			    else
 			      sleep(1)
 			      Thread.pass
 			    end
-		        mutex.synchronize { end_loop = stop_threads }
+		        break if(stop_threads)
 			  end
-			rescue Exception => e
+			rescue Exception
 			  mutex.synchronize { stop_threads = true }
-			  Thread.exit			  
 			end
 		  end
         end
@@ -110,30 +107,29 @@ class Execute < Hash
   	    {:output => stdout,:error => stderr}.each do |key, stream|
           threads << Thread.new do		    
 		    begin
-		      end_loop = stop_threads 
 			  last_pass_time = Time.now
-		      while wait_thr.alive? && !end_loop do
-		        unless(stream.closed?)
-			      if((char = stream.getc).nil? || ((Time.now - last_pass_time).to_i > 15))
-					last_pass_time = Time.now
+		      while wait_thr.alive? do
+			    while !stream.closed? && 
+				      !(char = stream.getc).nil? do
+			      case key
+			        when :output
+			          output << char
+					  putc char if(self[:echo_output])
+			        when :error
+			          error << char
+			      end
+				  
+			      if(wait_thr.alive? && ((Time.now - last_pass_time).to_i > 15))
 				    sleep(0.1)
+					last_pass_time = Time.now
 					Thread.pass
-				  else
-			        case key
-			          when :output
-			            output << char
-					    putc char if(self[:echo_output])
-			          when :error
-			            error << char
-			        end
 				  end
 			    end
-				mutex.synchronize { end_loop = stop_threads }
+				break if(stop_threads)
 			  end
-			  mutex.synchronize { stop_threads = true }
+			  mutex.synchronize { stop_threads = true }		      
 			rescue Exception
 			  mutex.synchronize { stop_threads = true }
-			  Thread.exit
 	        end
 		  end
 		end
