@@ -120,12 +120,12 @@ class Execute < Hash
 			      end
 				  
 			      if(wait_thr.alive? && ((Time.now - last_pass_time).to_i > 15))
-				    sleep(0.1)
 					last_pass_time = Time.now
 					Thread.pass
 				  end
 			    end
 				break if(stop_threads)
+				sleep(0.1)
 			  end
 			  mutex.synchronize { stop_threads = true }		      
 			rescue Exception
