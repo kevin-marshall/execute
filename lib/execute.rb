@@ -62,7 +62,8 @@ class Execute < Hash
 	raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
-	  exception_text = "Exit code: #{self[:exit_code]}"
+	  exception_text = "Command: '#{self[:command]}'"
+	  exception_text = "#{exception_text}\nExit code: #{self[:exit_code]}"
 	  exception_text = "#{exception_text}\nError: '#{self[:error]}'"
 	  exception_text = "#{exception_text}\nOutput: '#{self[:output]}'"
 	  raise StandardError.new(exception_text) 
