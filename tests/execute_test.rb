@@ -49,9 +49,7 @@ class Execute_test < MiniTest::Unit::TestCase
 	assert_raises(TimeoutError) { cmd.execute }
 	assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
  
-    notepad_is_running = false
-	Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
-	assert(!running?('notepad.exe'), "Notepad should have been killed when the command timed out")
+ 	assert(!running?('notepad.exe'), "Notepad should have been killed when the command timed out")
   end
   
   def test_invalid_command
