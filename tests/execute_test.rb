@@ -5,7 +5,7 @@ require 'benchmark'
 require 'timeout'
 require 'sys/proctable'
 
-class Execute_test < MiniTest::Unit::TestCase
+class Execute_test < MiniTest::Test
   def setup
     Execute.default_options({ echo_command: false, echo_output: false, debug: false})
   end
@@ -50,6 +50,21 @@ class Execute_test < MiniTest::Unit::TestCase
 	assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
  
  	assert(!running?('notepad.exe'), "Notepad should have been killed when the command timed out")
+  end
+  
+  def test_pre_timeout_command
+    `ocra CreateFile.rb` unless(File.exists?('CreateFile.exe'))
+	
+    file = './pre_timeout.txt'
+	File.delete(file) if(File.exists?(file))
+	
+	pre_timeout_command = "CreateFile.exe #{file}"
+	
+    timeout = 1
+	options = { timeout: timeout, timeout_signal: 'KILL', pre_timeout_command: Execute.new(pre_timeout_command) }
+	cmd = Execute.new('cmd /k C:\Windows\Notepad.exe', options)
+	assert_raises(TimeoutError) { cmd.execute }
+	assert(File.exists?(file), "#{file} should have been created")
   end
   
   def test_invalid_command
