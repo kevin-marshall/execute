@@ -91,6 +91,7 @@ class Execute < Hash
 		      while wait_thr.alive? do
 			    if((Time.now - start_time).to_f > timeout)
 				  self[:timed_out] = true 
+				  self[:pre_timeout_command].execute if(self.key?(:pre_timeout_command))
 				  interrupt
 		          mutex.synchronize {stop_threads = true }
 			    else
