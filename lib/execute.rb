@@ -3,6 +3,9 @@ require 'sys/proctable'
 require 'timeout'
 require 'benchmark'
 
+class TimeoutException < Exception
+end
+
 class Execute < Hash
   private 
   @@default_options = { echo_command: true, echo_output: true, ignore_exit_code: false, debug: false }
@@ -59,7 +62,7 @@ class Execute < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	raise Exception.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
+	raise TimeoutException.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Command: '#{self[:command]}'"
@@ -70,9 +73,9 @@ class Execute < Hash
 	end
   end
 
-  def call_popen
+def call_popen
 	begin
-      output = ''
+    output = ''
 	  error = ''  
 
 	  threads = []
@@ -82,9 +85,9 @@ class Execute < Hash
 	  timeout = self[:timeout] if(key?(:timeout))
 	  
 	  Open3.popen3(self[:command]) do |stdin, stdout, stderr, wait_thr|
-        self[:pid] = wait_thr.pid 
+      self[:pid] = wait_thr.pid 
 		
-		unless(timeout.nil?)
+		  unless(timeout.nil?)
 		  start_time = Time.now
 		  threads << Thread.new do 
 		    begin
@@ -104,85 +107,84 @@ class Execute < Hash
 			  mutex.synchronize { stop_threads = true }
 			end
 		  end
-        end
+    end
 		
-  	    {:output => stdout,:error => stderr}.each do |key, stream|
-          threads << Thread.new do		    
-		    begin
-			  last_pass_time = Time.now
+  	{:output => stdout,:error => stderr}.each do |key, stream|
+      threads << Thread.new do		    
+		  	begin
+			  	last_pass_time = Time.now
 		      while wait_thr.alive? do
-			    while !stream.closed? && 
-				      !(char = stream.getc).nil? do
-			      case key
-			        when :output
-			          output << char
-					  putc char if(self[:echo_output])
-			        when :error
-			          error << char
-			      end
+			    	while !stream.closed? && 
+				          !(char = stream.getc).nil? do
+			        case key
+			          when :output
+			            output << char
+					        putc char if(self[:echo_output])
+			          when :error
+			            error << char
+			        end
 				  
-			      if(wait_thr.alive? && ((Time.now - last_pass_time).to_i > 15))
-					last_pass_time = Time.now
-					Thread.pass
-				  end
+			        if(wait_thr.alive? && ((Time.now - last_pass_time).to_i > 15))
+					      last_pass_time = Time.now
+					      Thread.pass
+				      end
+			      end
+				    break if(stop_threads)
+				    sleep(0.1)
 			    end
-				break if(stop_threads)
-				sleep(0.1)
-			  end
-			  mutex.synchronize { stop_threads = true }		      
-			rescue Exception
-			  mutex.synchronize { stop_threads = true }
-	        end
+			    mutex.synchronize { stop_threads = true }		      
+			  rescue Exception
+			    mutex.synchronize { stop_threads = true }
+	      end
 		  end
 		end
 
-		threads.each { |thr| thr.join }
-		
+		threads.each { |thr| thr.join }		
 	    self[:output] = output unless(output.empty?)			    
-		self[:error] = error unless(error.empty?)
-		self[:exit_code] = wait_thr.value.to_i		
+		  self[:error] = error unless(error.empty?)
+		  self[:exit_code] = wait_thr.value.to_i		
 	  end
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
-      self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
+    self[:exit_code]=1 unless(self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
-  end
-  def call_capture
+end
+def call_capture
 	begin
-      if(key?(:timeout))
+    if(key?(:timeout))
 	    start_time = Time.now
-		Thread.new do
-		  while !key?(:exit_code) do
-		    sleep(0.1)			  
-			if((Time.now - start_time).to_f > self[:timeout])
-			  self[:timed_out] = true
-			  interrupt
-			  sleep(0.1)
-			  break
-			end
-		  end
-        end
+		  Thread.new do
+		    while !key?(:exit_code) do
+		      sleep(0.1)			  
+			    if((Time.now - start_time).to_f > self[:timeout])
+			      self[:timed_out] = true
+			      interrupt
+			      sleep(0.1)
+			    break
+			    end
+		    end
+      end
 	  end
 
-	  self[:output] = self[:error] = ''
+		self[:output] = self[:error] = ''
 	  self[:output], self[:error], status = Open3.capture3(self[:command])
 	  self[:exit_code] = status.to_i	
 	  
 	  puts self[:output] if(self[:echo_output] && !self[:output].empty?)
 	  
-	  raise Exception.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
+	  raise TimeoutException.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(!self[:exit_code].nil? || (self[:exit_code] == 0))
 	end
-  end
+end
   
-  def []=(key,value)
-    mutex = Mutex.new
+def []=(key,value)
+  mutex = Mutex.new
 	mutex.synchronize { super(key, value) }
-  end
+end
 
-  def [](key)
+def [](key)
     value = nil
     mutex = Mutex.new
 	mutex.synchronize { value = super(key) }
