@@ -59,7 +59,7 @@ class Execute < Hash
 	  puts "exit_code: #{self[:exit_code]}"
 	end
 	
-	raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
+	raise Exception.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 
 	if((self[:exit_code] != 0) && !self[:ignore_exit_code])
 	  exception_text = "Command: '#{self[:command]}'"
@@ -170,7 +170,7 @@ class Execute < Hash
 	  
 	  puts self[:output] if(self[:echo_output] && !self[:output].empty?)
 	  
-	  raise TimeoutError.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
+	  raise Exception.new("Command '#{self[:command]}' timed out after #{self[:timeout]} seconds") if(key?(:timed_out) && self[:timeout_raise_error])
 	rescue Exception => e
 	  self[:error] = "#{self[:error]}\nException: #{e.to_s}"
 	  self[:exit_code]=1 unless(!self[:exit_code].nil? || (self[:exit_code] == 0))
