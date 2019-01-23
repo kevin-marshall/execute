@@ -206,9 +206,9 @@ def [](key)
     processes = get_child_processes(self[:pid])
 	
 	Process.kill(self[:timeout_signal], self[:pid])
-	Process.waitpid(self[:pid]) unless(Sys::ProcTable.ps(self[:pid]).nil?) 
+	Process.waitpid(pid: self[:pid]) unless(Sys::ProcTable.ps(pid: self[:pid]).nil?) 
 	
-	processes.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(p.pid).nil?) }
+	processes.each { |p| Process.kill(self[:timeout_signal],p.pid) unless(Sys::ProcTable.ps(pid: p.pid).nil?) }
   end
 
   def get_child_processes(pid)

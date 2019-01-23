@@ -30,5 +30,5 @@ Gem::Specification.new do |s|
 	s.add_development_dependency 'rake', '~> 0'
 	s.add_development_dependency 'dev', '~> 0'
 	s.add_development_dependency 'ocra', '~> 0'
-	s.add_runtime_dependency 'sys-proctable', '>= 0.9.8'
+	s.add_runtime_dependency 'sys-proctable', '>= 1.2.1'
 end

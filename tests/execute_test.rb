@@ -28,7 +28,7 @@ class Execute_test < MiniTest::Test
 	
 	  sleep(1)
 	  cmd.interrupt
-	  assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
+	  assert(Sys::ProcTable.ps(pid: cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
  
     notepad_is_running = false
 	  Sys::ProcTable.ps { |p| notepad_is_running = true if(p.comm == 'notepad.exe') }
@@ -47,7 +47,7 @@ class Execute_test < MiniTest::Test
     timeout = 1
 	  cmd = Execute.new('cmd /k C:\Windows\Notepad.exe', { timeout: timeout, timeout_signal: 'KILL' })
 	  assert_raises(TimeoutException) { cmd.execute }
-	  assert(Sys::ProcTable.ps(cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
+	  assert(Sys::ProcTable.ps(pid: cmd[:pid]).nil?, "Failed to kill the spawned process: #{cmd[:pid]}")
  
  	  assert(!running?('notepad.exe'), "Notepad should have been killed when the command timed out")
   end
