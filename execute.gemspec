@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
 	s.summary		= 'Class wrapper for system commands'
 	s.description	= 'Class wrapper for system commands'
 	s.authors		= ["Kevin Marshall"]
-	s.email			= 'KCCKSMarshall@gmail.com'
+	s.email			= 'kevin@kware.us'
 	#s.rubyforge_project = 'execute'
 	s.homepage		= 'http://rubygems.org/gems/execute'
     s.required_ruby_version = '>= 1.9.1'
