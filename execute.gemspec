@@ -15,7 +15,7 @@
 #
 Gem::Specification.new do |s|
 	s.name			= 'execute'
-	s.version		= '0.1.76'
+	s.version		= '0.1.77'
 	s.summary		= 'Class wrapper for system commands'
 	s.description	= 'Class wrapper for system commands'
 	s.authors		= ["Kevin Marshall"]
@@ -29,6 +29,5 @@ Gem::Specification.new do |s|
     s.add_development_dependency 'bundler', '~> 0'
 	s.add_development_dependency 'rake', '~> 0'
 	s.add_development_dependency 'dev', '~> 0'
-	s.add_development_dependency 'ocra', '~> 0'
 	s.add_runtime_dependency 'sys-proctable', '>= 1.2.1'
 end

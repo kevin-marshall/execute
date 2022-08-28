@@ -6,5 +6,4 @@ group :test do
   gem 'rake'
   gem 'dev'
   gem 'bundler'
-  gem 'ocra'
 end
