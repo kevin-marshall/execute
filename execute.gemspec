@@ -19,15 +19,15 @@ Gem::Specification.new do |s|
 	s.summary		= 'Class wrapper for system commands'
 	s.description	= 'Class wrapper for system commands'
 	s.authors		= ["Kevin Marshall"]
-	#s.email			= 'kevin@kware.us'
+	s.email			= 'kevin@kware.us'
 	#s.rubyforge_project = 'execute'
 	s.homepage		= 'http://rubygems.org/gems/execute'
-    s.required_ruby_version = '>= 1.9.1'
+    s.required_ruby_version = '>= 3.0.0'
 	s.files         = Dir["LICENSE","README.md","lib/**/*","example/**/*"]
 	s.license       = 'Apache 2.0'
 	s.require_path  = 'lib' 
     s.add_development_dependency 'bundler', '~> 0'
 	s.add_development_dependency 'rake', '~> 0'
 	s.add_development_dependency 'dev', '~> 0'
-	s.add_runtime_dependency 'sys-proctable', '>= 1.2.1'
+	s.add_runtime_dependency 'sys-proctable', '>= 1.2.6'
 end
